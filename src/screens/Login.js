@@ -5,7 +5,8 @@ import {
     TextInput,
     View,
     Button,
-    Text
+    Text,
+    AsyncStorage
 } from 'react-native';
 
 const width = Dimensions.get('screen').width;
@@ -13,26 +14,28 @@ const width = Dimensions.get('screen').width;
 export default class Login extends Component {
 
     constructor() {
-        super();
+        super()
         this.state = {
             usuario: '',
             senha: '',
+            mensagem: '',
         }
     }
 
-    efetuaLogin() {
+    efetuaLogin = () => {
+        const teste = this.state.usuario
         const uri = "https://instalura-api.herokuapp.com/api/public/login";
-
+        
         const requestInfo = {
             method: 'POST',
             body: JSON.stringify({
-                login: this.state.usuario,
+                login: this.state.usuario,  
                 senha: this.state.senha
             }),
             headers: new Headers({
                 'Content-type': 'application/json'
             })
-        }
+        };
         
         fetch(uri, requestInfo)
             .then(response => {
@@ -41,7 +44,17 @@ export default class Login extends Component {
 
                 throw new Error('Não foi possível efetuar login');
             })
-            .then(token => console.warn(token));
+            .then(token => {
+                AsyncStorage.setItem( 'token', token)
+                AsyncStorage.setItem( 'usuario', this.state.usuario);
+            })
+            .catch(error => this.setState({mensagem: error.message}));
+    }
+
+    logout() {
+        AsyncStorage.removeItem('usuario');
+        AsyncStorage.removeItem('token');
+        // ir para tela de logout
     }
 
     render() {
@@ -63,6 +76,9 @@ export default class Login extends Component {
 
                     <Button title="Login" onPress={this.efetuaLogin}/>
                 </View>
+                <Text style={styles.mensagem}>
+                    {this.state.mensagem}
+                </Text>
             </View>
         )
     }
@@ -86,6 +102,10 @@ const styles = StyleSheet.create({
         borderBottomColor: '#ddd',
         borderBottomWidth: 1,
         height: 40,
+    },
+    mensagem: {
+        marginTop: 15,
+        color: '#e74c3c',
     }
 
 });
